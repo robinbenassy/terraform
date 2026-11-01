@@ -1,0 +1,4 @@
+node_modules
+dist
+# Îles sauvegardées en local : données personnelles, pas dans le dépôt.
+saves/

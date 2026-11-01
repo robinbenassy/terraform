@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#121c26" />
+    <title>Terraformeur d'îles</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="townLabels" hidden></div>
+
+    <aside id="panel">
+      <div class="panel-head">
+        <h1>Terraformeur d'îles</h1>
+        <button id="drawerClose" class="mobile-only" aria-label="Fermer le menu">✕</button>
+      </div>
+
+      <section class="desktop-only">
+        <h2>Outils</h2>
+        <div class="tools" id="tools">
+          <button data-tool="raise" class="active" title="Élever (1) — Maj : abaisser"><span>▲</span>Élever</button>
+          <button data-tool="lower" title="Abaisser (2) — Maj : élever"><span>▼</span>Abaisser</button>
+          <button data-tool="smooth" title="Lisser (3)"><span>≈</span>Lisser</button>
+          <button data-tool="flatten" title="Aplatir (4)"><span>▬</span>Aplatir</button>
+          <button data-tool="forest" title="Peindre une forêt (5) — Maj : gommer"><span>♣</span>Forêt</button>
+          <button data-tool="town" title="Peindre une ville (6) — Maj : gommer"><span>⌂</span>Ville</button>
+          <button data-tool="fields" title="Peindre des champs (7) — Maj : gommer"><span>▦</span>Champs</button>
+          <button data-tool="road" title="Tracer une route (8) — Maj+clic : supprimer"><span>═</span>Route</button>
+          <button data-tool="port" title="Placer un port sur une côte (9) — Maj+clic : supprimer"><span>⚓</span>Port</button>
+          <button data-tool="measure" title="Mesurer une distance (0)"><span>↔</span>Mesure</button>
+          <button data-tool="airport" title="Construire un aéroport (A) — clic : orientation automatique, glisser : tracer la piste, Maj+clic : supprimer"><span>✈</span>Aéroport</button>
+        </div>
+        <div class="row">
+          <button id="mapView" title="Vue du dessus avec les noms des villes (M)">◎ Vue carte</button>
+        </div>
+        <label class="slider">
+          <span>Rayon <output id="radiusOut"></output></span>
+          <input id="radius" type="range" min="2" max="80" step="0.5" value="20" />
+        </label>
+        <label class="slider">
+          <span>Force <output id="strengthOut"></output></span>
+          <input id="strength" type="range" min="0.05" max="1" step="0.05" value="0.4" />
+        </label>
+        <div class="row">
+          <button id="undo" title="Annuler (Ctrl+Z)">↶ Annuler</button>
+          <button id="redo" title="Rétablir (Ctrl+Y)">↷ Rétablir</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Météo</h2>
+        <label class="slider">
+          <span>Heure <output id="clockOut"></output></span>
+          <input id="clock" type="range" min="0" max="24" step="0.05" value="10" />
+        </label>
+        <div class="row">
+          <button id="clockPlay" title="Arrêter / reprendre le temps (T)">⏸ Pause</button>
+          <select id="dayLength" title="Durée d'une journée">
+            <option value="120">Jour : 2 min</option>
+            <option value="360" selected>Jour : 6 min</option>
+            <option value="1200">Jour : 20 min</option>
+          </select>
+        </div>
+        <label class="field">
+          <span>Perturbations</span>
+          <select id="weatherMode">
+            <option value="auto">Automatiques</option>
+            <option value="off">Aucune</option>
+          </select>
+        </label>
+        <div class="row">
+          <select id="stormType" title="Type de perturbation (selon le biome)"></select>
+          <button id="stormGo" title="Lancer une perturbation qui passera sur la zone regardée">Déclencher</button>
+        </div>
+        <div id="weatherStatus" class="status"></div>
+      </section>
+
+      <section>
+        <h2>Île</h2>
+        <input id="name" type="text" placeholder="Nom de l'île" maxlength="60" />
+        <label class="field">
+          <span>Biome</span>
+          <select id="biome"></select>
+        </label>
+        <div class="row">
+          <button id="save" class="primary" title="Sauvegarder (Ctrl+S)">Sauvegarder</button>
+          <button id="new" title="Repartir d'un océan vide (annulable)">Nouvelle</button>
+        </div>
+        <div class="row">
+          <button id="export" title="Télécharger un fichier .island.json">Exporter</button>
+          <button id="import" title="Charger une île (.island.json) ou un fichier « Tout exporter »">Importer</button>
+          <input id="importFile" type="file" accept=".json,application/json" hidden />
+        </div>
+      </section>
+
+      <section class="saves-section">
+        <h2>Sauvegardes</h2>
+        <div id="storageInfo" class="status"></div>
+        <ul id="saves"></ul>
+        <div class="row">
+          <button id="exportAll" title="Télécharger toutes les îles dans un seul fichier (à réimporter avec « Importer »)">Tout exporter</button>
+        </div>
+      </section>
+
+      <footer class="desktop-only">
+        <b>Clic gauche</b> peindre · <b>Maj</b> inverser / gommer<br />
+        <b>Clic droit</b> tourner · <b>Clic molette</b> déplacer · <b>Molette</b> zoom<br />
+        <b>1–9, 0</b> outils · <b>A</b> aéroport · <b>M</b> vue carte · <b>T</b> temps · <b>[ ]</b> rayon · <b>Ctrl+Z / Ctrl+Y</b>
+      </footer>
+    </aside>
+
+    <!-- Interface mobile : menu, barre d'outils au pouce et barre contextuelle (masquées sur ordinateur). -->
+    <button id="menuBtn" class="mobile-only" aria-label="Menu">☰</button>
+    <div id="mobileBar" class="mobile-only">
+      <div id="ctxBar">
+        <div class="ctx" data-ctx="brush">
+          <label class="slider"><span>Rayon <output id="mRadiusOut"></output></span><input id="mRadius" type="range" min="2" max="80" step="0.5" value="20" /></label>
+          <label class="slider"><span>Force <output id="mStrengthOut"></output></span><input id="mStrength" type="range" min="0.05" max="1" step="0.05" value="0.4" /></label>
+        </div>
+        <div class="ctx" data-ctx="road">
+          <button data-action="road-undo">⌫ Point</button>
+          <button data-action="road-cancel">Annuler</button>
+          <button data-action="road-done" class="primary">✓ Valider</button>
+        </div>
+        <div class="ctx hint" data-ctx="road-erase">Touche un tronçon pour le supprimer</div>
+        <div class="ctx" data-ctx="measure">
+          <button data-action="measure-undo">⌫ Point</button>
+          <button data-action="measure-clear">Effacer</button>
+        </div>
+        <div class="ctx hint" data-ctx="port">Touche une côte pour placer un port</div>
+        <div class="ctx hint" data-ctx="port-erase">Touche un port pour le supprimer</div>
+        <div class="ctx hint" data-ctx="airport">Touche un terrain dégagé : la piste s'oriente toute seule</div>
+        <div class="ctx hint" data-ctx="airport-erase">Touche un aéroport pour le supprimer</div>
+        <div class="ctx hint" data-ctx="view">Un doigt : tourner · Deux doigts : déplacer et zoomer</div>
+        <div class="ctx hint" data-ctx="map">Glisse pour te déplacer · Pince pour zoomer · Touche un nom pour le renommer</div>
+      </div>
+      <div id="toolBar">
+        <button data-action="view" title="Tourner la vue avec un doigt"><span>✋</span>Vue</button>
+        <button data-action="erase" title="Inverser / gommer / supprimer (comme Maj)"><span>⌫</span>Gomme</button>
+        <!-- outils : copiés depuis le panneau au démarrage -->
+        <button data-action="map" title="Vue carte"><span>◎</span>Carte</button>
+        <button data-action="undo" title="Annuler"><span>↶</span>Annuler</button>
+        <button data-action="redo" title="Rétablir"><span>↷</span>Rétablir</button>
+      </div>
+    </div>
+
+    <div id="hud"></div>
+    <div id="scalebar"></div>
+    <div id="measureLabel"></div>
+    <div id="toast"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
